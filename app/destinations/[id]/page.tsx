@@ -69,6 +69,17 @@ const destinations = {
   },
 };
 
+const destinationIds = Object.keys(destinations) as Array<
+  keyof typeof destinations
+>;
+
+export function generateStaticParams() {
+  return destinationIds.map((id) => ({ id }));
+}
+
+export const dynamicParams = false;
+
+
 export default function DestinationPage({
   params,
 }: {

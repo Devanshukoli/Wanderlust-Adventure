@@ -2,11 +2,12 @@
   "name": "wanderlust-backend",
   "version": "1.0.0",
   "main": "index.ts",
-  "scripts": {
-    
-  },
+  "scripts": {},
   "keywords": [],
   "author": "",
   "license": "ISC",
-  "description": "Backend repository for wanderlust site"
+  "description": "Backend repository for wanderlust site",
+  "dependencies": {
+    "express": "^5.2.1"
+  }
 }

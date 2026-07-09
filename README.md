@@ -20,8 +20,8 @@ Wanderlust Adventures is a travel application designed to provide users with a s
 ## 📦 Installation
 To get started with the project, follow these steps:
 1. Clone the repository using `git clone https://github.com/Devanshukoli/Wanderlust-Adventure`
-2. Install the dependencies using `npm install` or `yarn install`
-3. Start the development server using `npm run dev` or `yarn dev`
+2. Install the dependencies using `npm install`
+3. Start the development server using `npm run dev`
 4. Open the application in your web browser at `http://localhost:3000`
 
 ## 💻 Usage

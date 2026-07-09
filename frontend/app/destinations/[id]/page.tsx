@@ -1,128 +1,140 @@
-import { notFound } from "next/navigation";
+'use client';
 
-const destinations = {
-  bali: {
-    title: "Bali, Indonesia",
-    description: "Experience the magic of tropical paradise",
-    image: "https://images.unsplash.com/photo-1537996194471-e657df975ab4",
-    content: `
-      Discover the enchanting island of Bali, where ancient temples meet pristine beaches and lush rainforests. Known for its rich culture, stunning landscapes, and warm hospitality, Bali offers an unforgettable experience for every traveler.
+import { useEffect, useState } from 'react';
+import { useRouter } from 'next/navigation';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
 
-      Popular attractions include:
-      - Ubud Sacred Monkey Forest
-      - Tanah Lot Temple
-      - Tegalalang Rice Terraces
-      - Uluwatu Temple
-      - Nusa Dua Beach
-    `,
-    activities: [
-      "Temple Hopping",
-      "Surfing",
-      "Yoga Retreats",
-      "Cultural Performances",
-      "Cooking Classes",
-    ],
-  },
-  santorini: {
-    title: "Santorini, Greece",
-    description: "Discover the beauty of the Aegean Sea",
-    image: "https://images.unsplash.com/photo-1570077188670-e3a8d69ac5ff",
-    content: `
-      Experience the breathtaking beauty of Santorini, a jewel in the Aegean Sea. Famous for its white-washed buildings, blue-domed churches, and spectacular sunsets, this Greek paradise offers a perfect blend of romance, history, and natural beauty.
-
-      Must-visit locations include:
-      - Oia Village
-      - Fira
-      - Red Beach
-      - Ancient Thera
-      - Akrotiri Archaeological Site
-    `,
-    activities: [
-      "Sunset Watching",
-      "Wine Tasting",
-      "Boat Tours",
-      "Beach Hopping",
-      "Photography Tours",
-    ],
-  },
-  "swiss-alps": {
-    title: "Swiss Alps",
-    description: "Adventure in the heart of Europe",
-    image: "https://images.unsplash.com/photo-1531366936337-7c912a4589a7",
-    content: `
-      Embark on an alpine adventure in the majestic Swiss Alps. With breathtaking mountain scenery, pristine lakes, and charming villages, the Swiss Alps offer year-round activities for nature lovers and adventure seekers alike.
-
-      Highlights include:
-      - Zermatt and the Matterhorn
-      - Jungfraujoch
-      - Lake Lucerne
-      - Interlaken
-      - Glacier Express
-    `,
-    activities: [
-      "Skiing",
-      "Hiking",
-      "Mountain Biking",
-      "Paragliding",
-      "Scenic Train Rides",
-    ],
-  },
+type Package = {
+  id: string;
+  slug: string;
+  title: string;
+  description: string;
+  image_url: string;
+  price_cents: number;
+  currency: string;
+  duration_days: number;
+  activities: string[];
 };
 
-const destinationIds = Object.keys(destinations) as Array<
-  keyof typeof destinations
->;
+export default function DestinationPage({ params }: { params: { id: string } }) {
+  const router = useRouter();
+  const [pkg, setPkg] = useState<Package | null>(null);
+  const [notFound, setNotFound] = useState(false);
 
-export function generateStaticParams() {
-  return destinationIds.map((id) => ({ id }));
-}
+  const [travelerName, setTravelerName] = useState('');
+  const [travelerEmail, setTravelerEmail] = useState('');
+  const [numTravelers, setNumTravelers] = useState(1);
+  const [travelDate, setTravelDate] = useState('');
+  const [isBooking, setIsBooking] = useState(false);
+  const [bookingError, setBookingError] = useState<string | null>(null);
 
-export const dynamicParams = false;
+  useEffect(() => {
+    fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}/api/destinations/${params.id}`)
+      .then((res) => {
+        if (!res.ok) throw new Error('not found');
+        return res.json();
+      })
+      .then(setPkg)
+      .catch(() => setNotFound(true));
+  }, [params.id]);
 
+  const handleBooking = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!pkg) return;
+    setIsBooking(true);
+    setBookingError(null);
 
-export default function DestinationPage({
-  params,
-}: {
-  params: { id: string };
-}) {
-  const destination = destinations[params.id as keyof typeof destinations];
+    try {
+      const res = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}/api/bookings`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Idempotency-Key': crypto.randomUUID(),
+        },
+        body: JSON.stringify({
+          packageId: pkg.id,
+          travelerName,
+          travelerEmail,
+          numTravelers,
+          travelDate,
+        }),
+      });
 
-  if (!destination) {
-    notFound();
+      if (!res.ok) {
+        const body = await res.json().catch(() => ({}));
+        throw new Error(body.error || 'Could not create booking.');
+      }
+
+      const { clientSecret, bookingId } = await res.json();
+
+      router.push(
+        `/checkout?client_secret=${encodeURIComponent(clientSecret)}&booking_id=${bookingId}`
+      );
+    } catch (err) {
+      setBookingError(err instanceof Error ? err.message : 'Something went wrong.');
+      setIsBooking(false);
+    }
+  };
+
+  if (notFound) {
+    return <div className="min-h-screen pt-32 text-center">Destination not found.</div>;
+  }
+  if (!pkg) {
+    return <div className="min-h-screen pt-32 text-center">Loading...</div>;
   }
 
   return (
     <div className="min-h-screen pt-20">
       <div className="relative h-[50vh]">
-        <img
-          src={destination.image}
-          alt={destination.title}
-          className="w-full h-full object-cover"
-        />
+        <img src={pkg.image_url} alt={pkg.title} className="w-full h-full object-cover" />
         <div className="absolute inset-0 bg-black/40" />
         <div className="absolute inset-0 flex items-center justify-center">
-          <h1 className="text-5xl font-bold text-white">{destination.title}</h1>
+          <h1 className="text-5xl font-bold text-white">{pkg.title}</h1>
         </div>
       </div>
 
       <div className="container mx-auto px-4 py-12">
-        <div className="max-w-4xl mx-auto">
-          <p className="text-xl mb-8 whitespace-pre-line">
-            {destination.content}
-          </p>
+        <div className="max-w-4xl mx-auto grid md:grid-cols-2 gap-12">
+          <div>
+            <p className="text-xl mb-6">{pkg.description}</p>
+            <p className="text-2xl font-bold mb-6">
+              ${(pkg.price_cents / 100).toFixed(2)}{' '}
+              <span className="text-sm font-normal text-gray-500">
+                per person / {pkg.duration_days} days
+              </span>
+            </p>
+            <h2 className="text-2xl font-bold mb-4">Activities</h2>
+            <ul className="grid grid-cols-1 gap-3 mb-8">
+              {pkg.activities.map((activity) => (
+                <li key={activity} className="flex items-center bg-gray-50 p-4 rounded-lg">
+                  <span className="w-2 h-2 bg-blue-600 rounded-full mr-3" />
+                  {activity}
+                </li>
+              ))}
+            </ul>
+          </div>
 
-          <h2 className="text-2xl font-bold mb-4">Activities</h2>
-          <ul className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-8">
-            {destination.activities.map((activity, index) => (
-              <li
-                key={index}
-                className="flex items-center bg-gray-50 p-4 rounded-lg"
-              >
-                <span className="w-2 h-2 bg-blue-600 rounded-full mr-3" />
-                {activity}
-              </li>
-            ))}
-          </ul>
+          <div className="bg-gray-50 p-6 rounded-lg h-fit">
+            <h2 className="text-xl font-bold mb-4">Book this trip</h2>
+            <form onSubmit={handleBooking} className="space-y-4">
+              <Input placeholder="Your name" required value={travelerName}
+                onChange={(e) => setTravelerName(e.target.value)} />
+              <Input type="email" placeholder="Your email" required value={travelerEmail}
+                onChange={(e) => setTravelerEmail(e.target.value)} />
+              <Input type="number" min={1} placeholder="Number of travelers" required
+                value={numTravelers} onChange={(e) => setNumTravelers(Number(e.target.value))} />
+              <Input type="date" required value={travelDate}
+                onChange={(e) => setTravelDate(e.target.value)} />
+              <p className="font-semibold">
+                Total: ${((pkg.price_cents * numTravelers) / 100).toFixed(2)}
+              </p>
+              {bookingError && <p className="text-sm text-red-600">{bookingError}</p>}
+              <Button type="submit" disabled={isBooking} className="w-full">
+                {isBooking ? 'Creating booking...' : 'Continue to payment'}
+              </Button>
+            </form>
+          </div>
         </div>
       </div>
     </div>

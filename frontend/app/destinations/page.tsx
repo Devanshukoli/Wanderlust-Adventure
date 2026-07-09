@@ -7,40 +7,38 @@ import {
 } from "@/components/ui/card";
 import Link from "next/link";
 
-const destinations = [
-  {
-    id: "bali",
-    title: "Bali, Indonesia",
-    description: "Experience the magic of tropical paradise",
-    image: "https://images.unsplash.com/photo-1537996194471-e657df975ab4",
-  },
-  {
-    id: "santorini",
-    title: "Santorini, Greece",
-    description: "Discover the beauty of the Aegean Sea",
-    image: "https://images.unsplash.com/photo-1570077188670-e3a8d69ac5ff",
-  },
-  {
-    id: "swiss-alps",
-    title: "Swiss Alps",
-    description: "Adventure in the heart of Europe",
-    image: "https://images.unsplash.com/photo-1531366936337-7c912a4589a7",
-  },
-  // Add more destinations as needed
-];
+type Destination = {
+  slug: string;
+  title: string;
+  description: string;
+  image_url: string;
+  price_cents: number;
+  currency: string;
+  duration_days: number;
+};
 
-export default function DestinationsPage() {
+async function getDestinations(): Promise<Destination[]> {
+  const res = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}/api/destinations`, {
+    cache: 'no-store',
+  });
+  if (!res.ok) throw new Error('Failed to load destinations');
+  return res.json();
+}
+
+export default async function DestinationsPage() {
+  const destinations = await getDestinations();
+
   return (
     <div className="min-h-screen pt-20 bg-gray-50 bg-muted/50">
       <div className="container mx-auto px-4 py-12">
         <h1 className="text-4xl font-bold mb-8">Our Destinations</h1>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
           {destinations.map((destination) => (
-            <Link href={`/destinations/${destination.id}`} key={destination.id}>
+            <Link href={`/destinations/${destination.slug}`} key={destination.slug}>
               <Card className="hover:shadow-lg transition cursor-pointer">
                 <CardHeader>
                   <img
-                    src={destination.image}
+                    src={destination.image_url}
                     alt={destination.title}
                     className="w-full h-48 object-cover rounded-t-lg"
                   />
@@ -48,6 +46,12 @@ export default function DestinationsPage() {
                 <CardContent>
                   <CardTitle className="mb-2">{destination.title}</CardTitle>
                   <CardDescription>{destination.description}</CardDescription>
+                  <p className="mt-3 font-semibold">
+                    ${(destination.price_cents / 100).toFixed(2)}{' '}
+                    <span className="text-sm font-normal text-gray-500">
+                      / {destination.duration_days} days
+                    </span>
+                  </p>
                 </CardContent>
               </Card>
             </Link>

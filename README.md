@@ -81,4 +81,5 @@ To contribute to the project, follow these steps:
 The project is licensed under the MIT License.
 
 ## 📬 Contact
-For any questions or concerns, please contact us at [support@example.com](mailto:kolidevanshu02@gmail.com).
+For any questions or concerns, please [issues](https://github.com/Devanshukoli/Wanderlust-Adventure/issues)
+

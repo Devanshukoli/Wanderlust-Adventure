@@ -1,7 +1,7 @@
 'use client';
 
-import { Suspense, useState } from 'react';
-import { useSearchParams } from 'next/navigation';
+import { Suspense, useEffect, useState } from 'react';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { loadStripe } from '@stripe/stripe-js';
 import {
   Elements,
@@ -11,6 +11,7 @@ import {
   useElements,
 } from '@stripe/react-stripe-js';
 import { Button } from '@/components/ui/button';
+import { useAuth } from '@/lib/auth';
 
 const stripePromise = loadStripe(process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY as string);
 
@@ -48,8 +49,21 @@ function CheckoutForm() {
 }
 
 function CheckoutInner() {
+  const router = useRouter();
   const searchParams = useSearchParams();
+  const { session, isLoading } = useAuth();
   const clientSecret = searchParams.get('client_secret');
+
+  useEffect(() => {
+    if (!isLoading && !session) {
+      const checkoutPath = `/checkout?${searchParams.toString()}`;
+      router.replace(`/sign-in?redirect=${encodeURIComponent(checkoutPath)}`);
+    }
+  }, [isLoading, router, searchParams, session]);
+
+  if (isLoading || !session) {
+    return <div className="min-h-screen pt-32 text-center">Checking your sign-in status...</div>;
+  }
 
   if (!clientSecret) {
     return (

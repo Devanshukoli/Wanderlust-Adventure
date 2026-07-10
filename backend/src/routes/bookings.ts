@@ -1,6 +1,7 @@
 import { Router, Request, Response } from 'express';
 import Stripe from 'stripe';
 import { supabase } from '../lib/supabase';
+import { requireAuth } from '../middleware/requireAuth';
 
 const router = Router();
 
@@ -11,7 +12,7 @@ const stripe = new Stripe(process.env.STRIPE_SECRET_KEY, {
   apiVersion: '2026-06-24.dahlia',
 });
 
-router.post('/', async (req: Request, res: Response) => {
+router.post('/', requireAuth, async (req: Request, res: Response) => {
   const { packageId, travelerName, travelerEmail, numTravelers, travelDate } = req.body;
 
   if (!packageId || !travelerName || !travelerEmail || !numTravelers || !travelDate) {

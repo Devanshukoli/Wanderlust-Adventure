@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { useAuth } from '@/lib/auth';
 
 type Package = {
   id: string;
@@ -19,6 +20,7 @@ type Package = {
 
 export default function DestinationPage({ params }: { params: { id: string } }) {
   const router = useRouter();
+  const { session, isLoading } = useAuth();
   const [pkg, setPkg] = useState<Package | null>(null);
   const [notFound, setNotFound] = useState(false);
 
@@ -42,6 +44,14 @@ export default function DestinationPage({ params }: { params: { id: string } }) 
   const handleBooking = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!pkg) return;
+
+    if (isLoading) return;
+
+    if (!session) {
+      router.push(`/sign-in?redirect=${encodeURIComponent(`/destinations/${params.id}`)}`);
+      return;
+    }
+
     setIsBooking(true);
     setBookingError(null);
 
@@ -51,6 +61,7 @@ export default function DestinationPage({ params }: { params: { id: string } }) 
         headers: {
           'Content-Type': 'application/json',
           'Idempotency-Key': crypto.randomUUID(),
+          Authorization: `Bearer ${session.access_token}`,
         },
         body: JSON.stringify({
           packageId: pkg.id,
@@ -63,6 +74,10 @@ export default function DestinationPage({ params }: { params: { id: string } }) 
 
       if (!res.ok) {
         const body = await res.json().catch(() => ({}));
+        if (res.status === 401) {
+          router.push(`/sign-in?redirect=${encodeURIComponent(`/destinations/${params.id}`)}`);
+          return;
+        }
         throw new Error(body.error || 'Could not create booking.');
       }
 

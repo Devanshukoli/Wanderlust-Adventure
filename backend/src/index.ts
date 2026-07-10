@@ -6,6 +6,7 @@ import helmet from 'helmet';
 import cors from 'cors';
 import destinationsRouter from './routes/destinations';
 import bookingsRouter from './routes/bookings';
+import authRouter from './routes/auth';
 
 
 const app = express();
@@ -24,6 +25,7 @@ app.get('/', (req, res) => {
 })
 
 app.use('/api/destinations', destinationsRouter);
+app.use('/api/auth', authRouter);
 app.use('/api/bookings', bookingsRouter);
 
 const server = app.listen(port, async () => {

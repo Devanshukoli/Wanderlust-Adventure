@@ -3,8 +3,12 @@
 import Link from 'next/link';
 import { Plane } from 'lucide-react';
 import { ThemeToggle } from './ThemeToggle';
+import { Button } from './ui/button';
+import { useAuth } from '@/lib/auth';
 
 const Navbar = () => {
+  const { session, signOut } = useAuth();
+
   return (
     <nav className="fixed w-full bg-background/80 backdrop-blur-md z-50 border-b">
       <div className="container mx-auto px-4 py-3 flex justify-between items-center">
@@ -22,6 +26,15 @@ const Navbar = () => {
           <Link href="/contact" className="text-foreground/80 hover:text-primary transition">
             Contact Us
           </Link>
+          {session ? (
+            <Button type="button" variant="ghost" onClick={signOut}>
+              Sign out
+            </Button>
+          ) : (
+            <Link href="/sign-in" className="text-foreground/80 hover:text-primary transition">
+              Sign in
+            </Link>
+          )}
           <ThemeToggle />
         </div>
       </div>
